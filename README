@@ -1,0 +1,31 @@
+# ReparoML — PyTorch demos of energy-bounded self-repair (TGRM)
+
+**Goal:** Show that small, targeted **repair pulses** can recover model performance after degradation with **less energy** than full retraining.
+
+We run:  
+1) Train a small CNN on MNIST → save checkpoint  
+2) **Fault injection** (weight noise, bias drift, layer dropout)  
+3) Compare recovery:
+   - **Retrain** (expensive)
+   - **TGRM Repair** (bounded, targeted updates)
+4) Log accuracy, repair energy, and **BPI = performance gain / energy cost**
+
+## Quickstart
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+# 1) Train baseline and save ckpt
+python experiments/run_mnist_cnn.py --phase train --out outputs/mnist_baseline
+
+# 2) Inject faults
+python experiments/run_mnist_cnn.py --phase fault --in_ckpt outputs/mnist_baseline/best.pt --out outputs/mnist_faults
+
+# 3) Repair with TGRM
+python experiments/run_mnist_cnn.py --phase repair --in_ckpt outputs/mnist_faults/faulted.pt --out outputs/mnist_repair --tgrm_steps 200
+
+# 4) (Optional) Retrain baseline from faulted state (expensive)
+python experiments/run_mnist_cnn.py --phase retrain --in_ckpt outputs/mnist_faults/faulted.pt --out outputs/mnist_retrain --epochs 2
+
+# 5) Plot comparisons
+python experiments/plot_runs.py --dirs outputs/mnist_baseline outputs/mnist_faults outputs/mnist_repair outputs/mnist_retrain
